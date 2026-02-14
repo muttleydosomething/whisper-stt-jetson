@@ -32,7 +32,16 @@ whisper.cpp compiles natively with CUDA via cmake, has a **built-in OpenAI-compa
 - NVIDIA Jetson Orin Nano (8GB recommended) running JetPack 6.x
 - Docker with `nvidia-container-runtime`
 
-### 1. Build the image
+### 1. Get the image
+
+**Option A: Pull pre-built (recommended)**
+
+```bash
+docker pull ghcr.io/muttleydosomething/whisper-stt-jetson:latest
+docker tag ghcr.io/muttleydosomething/whisper-stt-jetson:latest whisper-stt-jetson
+```
+
+**Option B: Build from source (~30 min)**
 
 ```bash
 git clone https://github.com/muttleydosomething/whisper-stt-jetson.git
