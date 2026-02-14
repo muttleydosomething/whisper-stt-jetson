@@ -243,6 +243,12 @@ Should work on other Jetson Orin variants (Orin NX, AGX Orin) with JetPack 6.x. 
 
 ---
 
+## See Also
+
+- **[Chatterbox TTS on Jetson](https://github.com/muttleydosomething/chatterbox-jetson-nano)** — GPU-accelerated text-to-speech with voice cloning. Runs alongside Whisper on the same Orin Nano for a complete voice I/O stack (TTS on port 8004, STT on port 8005).
+
+---
+
 ## Acknowledgments
 
 - [whisper.cpp](https://github.com/ggml-org/whisper.cpp) by Georgi Gerganov — the engine that makes this possible
