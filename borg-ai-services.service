@@ -1,0 +1,13 @@
+[Unit]
+Description=Borg AI Services (Chatterbox TTS + Whisper STT)
+After=docker.service
+Requires=docker.service
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+ExecStart=/home/muttleydosomething/borg-ai-services.sh
+ExecStop=/usr/bin/docker stop whisper-stt chatterbox-tts
+
+[Install]
+WantedBy=multi-user.target

@@ -156,27 +156,32 @@ This project is designed to run alongside Chatterbox TTS on the same Jetson, cre
 
 ### Startup Order Matters
 
-**Chatterbox must load first.** It uses PyTorch which needs a large contiguous GPU allocation (~3-5 GiB). If Whisper grabs GPU memory first, Chatterbox's `cudaMalloc` will fail with `NVML_SUCCESS == r INTERNAL ASSERT FAILED`.
+**Chatterbox must load first.** It uses PyTorch which needs a large contiguous GPU allocation (~5.5 GiB in fp16). If Whisper grabs GPU memory first, Chatterbox's `cudaMalloc` will fail with `NVML_SUCCESS == r INTERNAL ASSERT FAILED`.
 
-Recommended approach: let Chatterbox auto-start via Docker's `unless-stopped` restart policy, then start Whisper with a delay via systemd:
+### Boot Orchestration Script
 
-```ini
-# /etc/systemd/system/whisper-stt.service
-[Unit]
-Description=Whisper STT Server (after Chatterbox TTS)
-After=docker.service
-Requires=docker.service
+This repo includes `borg-ai-services.sh` — a startup script that handles the correct boot order automatically:
 
-[Service]
-Type=oneshot
-RemainAfterExit=yes
-ExecStartPre=/bin/sleep 45
-ExecStart=/usr/bin/docker start whisper-stt
-ExecStop=/usr/bin/docker stop whisper-stt
+1. Clears kernel page cache to maximize available memory
+2. Stops any running instances of both services
+3. Starts Chatterbox TTS and waits for `TTS Model loaded successfully` in logs
+4. If Chatterbox fails to load, retries after clearing memory again
+5. Starts Whisper STT once Chatterbox is healthy
 
-[Install]
-WantedBy=multi-user.target
+Install as a systemd service:
+
+```bash
+# Copy files to Jetson
+cp borg-ai-services.sh ~/borg-ai-services.sh
+chmod +x ~/borg-ai-services.sh
+
+# Install systemd unit
+sudo cp borg-ai-services.service /etc/systemd/system/
+sudo systemctl daemon-reload
+sudo systemctl enable borg-ai-services
 ```
+
+> **Note:** Edit `borg-ai-services.sh` to match your setup — the script assumes Chatterbox's `start-gpu.sh` is at `~/chatterbox-jetson/start-gpu.sh` and uses `base.en` as the Whisper model. Change `--model /app/models/ggml-base.en.bin` to `ggml-small.en.bin` if you have the `small.en` model downloaded and your memory budget allows it.
 
 ### Memory Budget (8GB Orin)
 
@@ -186,6 +191,8 @@ Whisper base.en:        ~320 MiB (model + compute buffers)
 Kernel + driver:        ~650 MiB
 Total:                  ~6.5 GiB of 7.5 GiB available
 ```
+
+With `small.en` (~730 MiB) instead of `base.en`, the total rises to ~6.9 GiB — it works when manually started after Chatterbox settles, but may OOM during automated cold boot when memory is more fragmented. Use `base.en` for reliable unattended startup.
 
 ---
 
